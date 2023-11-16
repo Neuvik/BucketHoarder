@@ -22,3 +22,9 @@ For MacOS
 ```
 brew install libmagic
 ```
+
+Create a .env file within the BucketHoarder directory and add your API key in the following format
+```
+API_KEY=API KEY HERE
+```
+
