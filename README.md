@@ -1,5 +1,15 @@
 # BucketHoarder
 
+BucketHoarder was built to perform searches via the GrayHat Warfare APIs and then download all files matching the query.
+
+Things may break as the APIs are updated.
+
+Once intsall run BucketHoarder with the help command to understand how to format queries.
+
+```
+./buckethoarder.py --help
+```
+
 ## Requirements
 
 For most *nix machines.
