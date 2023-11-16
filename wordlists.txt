@@ -1,0 +1,6 @@
+NTDS
+terraform.tfstate
+id_rsa
+id_ed25519
+credentials
+ntds.dit

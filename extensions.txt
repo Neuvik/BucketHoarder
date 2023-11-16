@@ -1,0 +1,1 @@
+ps1,cmd,bat,vbs,sh,key,dit,pem,qbo,tfvars,tfstate,bak,sql,bacpac,env,vmdk,vhd

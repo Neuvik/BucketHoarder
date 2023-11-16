@@ -1,0 +1,4 @@
+pyjq
+requests
+python-magic
+python-dotenv
