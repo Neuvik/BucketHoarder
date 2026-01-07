@@ -22,75 +22,79 @@ def arguments():
     parser.add_argument("-t", "--search-term", action='store', help="Terms to search for in path or filename", nargs='*')
     parser.add_argument("-i", "--include-ext", action='store', help="File extensions to include in search", nargs='*')
     parser.add_argument("-e", "--exclude-ext", action='store', help="File extensions to exclude in search", nargs='*')
-    parser.add_argument("-p","--full-path", action='store', help="Set to 1 to search full file path, set to 0 to just search file name", type=int, default=1)
+    parser.add_argument("-p","--full-path", action='store', help="Set to 1 to search full file path, set to 0 to just search file name", type=str, default="0")
     parser.add_argument("-d","--directory", action='store', help="Direcory to store downloaded files",  default="downloads")
     parser.add_argument("-v","--verbose", action='store_true', default=False)
     return parser.parse_args()
 
 #get count of total number of files
 def item_count(api_key,search_terms,include_ext,exclude_ext,full_path,verbose):
-    url="https://buckets.grayhatwarfare.com/api/v1/files/"
+    url="https://buckets.grayhatwarfare.com/api/v2/files"
     if search_terms:
-        url+=search_terms+"/0/1?"
+        url+='?keywords='+search_terms
     if include_ext:
-        url+="extensions="+include_ext
-    if include_ext:
+        url+="&extensions="+include_ext
+    if exclude_ext:
         url+="&stopextensions="+exclude_ext 
+    if full_path:
+        url+="&full-path="+full_path
     if api_key:
         headers={"Authorization": "Bearer "+api_key}
     r = requests.get(url, headers=headers)
     if verbose == True:
         print("[*]    For Debugging Purpses the URL Query is: " +str(r.url)) # Comment out in debug OR redact and log.
-    items = pyjq.all('.results', json.loads(r.text))[0] 
-    print("[*]    Total Number of items: "+str(items)) 
+    items = pyjq.all('.meta.results', json.loads(r.text))[0]
+    print("[*]    Total Number of items: "+str(items))
     return(items)
 
-#Iterate through API pagination and return all file urls as a list
-def get_file_list(total_results,api_key,search_terms,include_ext,exclude_ext,full_path):
+#Return all file urls as a list
+def get_file_list(api_key,search_terms,include_ext,exclude_ext,full_path):
     file_list=[]
-    for i in range(0, total_results, 1000):
-        url="https://buckets.grayhatwarfare.com/api/v1/files/"
-        if search_terms:
-            url+=search_terms+"/"+str(i)+"/1000?"
-        if include_ext:
-            url+="extensions="+include_ext
-        if include_ext:
-            url+="&stopextensions="+exclude_ext 
-        if api_key:
-            headers={"Authorization": "Bearer "+api_key}
-        r = requests.get(url, headers=headers)
-        if verbose == True:
-            print("API Request: "+r.url)
-        #print(r.text)
-        pagination_file_list = pyjq.all('.files[] .url', json.loads(r.text))
-        file_list.extend(pagination_file_list)
+    url="https://buckets.grayhatwarfare.com/api/v2/files"
+    if search_terms:
+        url+='?keywords='+search_terms
+    if include_ext:
+        url+="&extensions="+include_ext
+    if exclude_ext:
+        url+="&stopextensions="+exclude_ext 
+    if full_path:
+        url+="&full-path="+full_path
+    if api_key:
+        headers={"Authorization": "Bearer "+api_key}
+    r = requests.get(url, headers=headers)
+    if verbose == True:
+        print("API Request: "+r.url)
+    #print(r.text)
+    file_list = pyjq.all('.files[] .url', json.loads(r.text))
+    #file_list.extend(pagination_file_list)
         #print(pagination_file_list)
     if verbose == True:
-        print(pagination_file_list)
+        print(file_list)
     return(file_list)
 
 #Iterate through API pagination and return all bucket ids, bucket names and urls
-def print_file_list(total_results,api_key,search_terms,include_ext,exclude_ext,full_path):
+def print_file_list(api_key,search_terms,include_ext,exclude_ext,full_path,verbose):
     file_list=[]
-    for i in range(0, total_results, 1000):
-        url="https://buckets.grayhatwarfare.com/api/v1/files/"
-        if search_terms:
-            url+=search_terms+"/"+str(i)+"/1000?"
-        if include_ext:
-            url+="extensions="+include_ext
-        if include_ext:
-            url+="&stopextensions="+exclude_ext 
-        if api_key:
-            headers={"Authorization": "Bearer "+api_key}
-    
-        r = requests.get(url, headers=headers)
-        if verbose == True:
-            print(r.text)
-        pagination_file_list = pyjq.all('.files[]| .id, .bucket, .url', json.loads(r.text))
-        file_list.extend(pagination_file_list)
-        if verbose == True:
-            print(pagination_file_list)
-        
+    url="https://buckets.grayhatwarfare.com/api/v2/files"
+    if search_terms:
+        url+='?keywords='+search_terms
+    if include_ext:
+        url+="&extensions="+include_ext
+    if exclude_ext:
+        url+="&stopextensions="+exclude_ext 
+    if full_path:
+        url+="&full-path="+full_path
+    if api_key:
+        headers={"Authorization": "Bearer "+api_key}
+    r = requests.get(url, headers=headers)
+    if verbose == True:
+        print("API Request: "+r.url)
+    #print(r.text)
+    file_list = pyjq.all('.files[] .url', json.loads(r.text))
+    #file_list.extend(pagination_file_list)
+        #print(pagination_file_list)
+    if verbose == True:
+        print(file_list)
     return(file_list)
 
 #for link in file_list:
@@ -131,7 +135,7 @@ def download_files(api_key,search_terms,include_ext,exclude_ext,full_path,output
 
     print("Total files: "+str(total_results))
 
-    file_list=get_file_list(total_results,api_key,search_terms,include_ext,exclude_ext,full_path)
+    file_list=get_file_list(api_key,search_terms,include_ext,exclude_ext,full_path)
     
     print("Total number of files: "+str(len(file_list)))
 
@@ -174,7 +178,7 @@ def main():
         if verbose == True:
             print (exclude_ext)
     if args.full_path:
-        full_path=args.full_path
+        full_path=str(args.full_path)
         if verbose == True:
             print (full_path)
     if args.directory:
@@ -208,7 +212,7 @@ The following are arguments passed in:
     match args.function:
         case "p":
             total_results=item_count(api_key,search_terms,include_ext,exclude_ext,full_path,verbose)
-            print_file_list(total_results,api_key,search_terms,include_ext,exclude_ext,full_path)
+            print_file_list(api_key,search_terms,include_ext,exclude_ext,full_path,verbose)
         case "d":
             download_files(api_key,search_terms,include_ext,exclude_ext,full_path,output_directory,verbose)
         case "b":
@@ -228,7 +232,7 @@ if __name__ == "__main__":
 :    \____/ \__,_|\___|_|\_\___|\__\_| |_/\___/ \__,_|_|  \__,_|\___|_|       ;
 :                                                                             ;
 :                                                                             ; 
-:                                                                             ;
+:                                                                       cd /      ;
 :   Neuvik's BucketHoarder for use with the grayhatwarfare API.               ;
 :                                                                             ;
 `-----------------------------------------------------------------------------+
