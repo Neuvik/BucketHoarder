@@ -1,18 +1,42 @@
 #!/usr/bin/python3
 import argparse
-from ast import arguments # This is to properly parse arguments and use them as sets.
-from distutils import filelist 
 import os
 import sys
 import json
 import requests
-import pyjq
 import concurrent.futures
 from urllib.parse import urlparse
-from dotenv import load_dotenv
 
 
 verbose = False
+
+#Load environment variables from .env file if it exists
+def load_env_file(env_path='.env'):
+    """Simple .env file loader using only standard library"""
+    if not os.path.exists(env_path):
+        return
+    try:
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                # Skip empty lines and comments
+                if not line or line.startswith('#'):
+                    continue
+                # Parse KEY=VALUE format
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip()
+                    # Remove quotes if present
+                    if value.startswith('"') and value.endswith('"'):
+                        value = value[1:-1]
+                    elif value.startswith("'") and value.endswith("'"):
+                        value = value[1:-1]
+                    # Only set if not already in environment
+                    if key and key not in os.environ:
+                        os.environ[key] = value
+    except Exception as e:
+        print(f"[!] Warning: Could not load .env file: {e}")
 
 #process arguments
 def arguments():
@@ -43,7 +67,8 @@ def item_count(api_key,search_terms,include_ext,exclude_ext,full_path,verbose):
     r = requests.get(url, headers=headers)
     if verbose == True:
         print("[*]    For Debugging Purpses the URL Query is: " +str(r.url)) # Comment out in debug OR redact and log.
-    items = pyjq.all('.meta.results', json.loads(r.text))[0]
+    data = json.loads(r.text)
+    items = data['meta']['results']
     print("[*]    Total Number of items: "+str(items))
     return(items)
 
@@ -56,7 +81,7 @@ def get_file_list(api_key,search_terms,include_ext,exclude_ext,full_path):
     if include_ext:
         url+="&extensions="+include_ext
     if exclude_ext:
-        url+="&stopextensions="+exclude_ext 
+        url+="&stopextensions="+exclude_ext
     if full_path:
         url+="&full-path="+full_path
     if api_key:
@@ -65,7 +90,8 @@ def get_file_list(api_key,search_terms,include_ext,exclude_ext,full_path):
     if verbose == True:
         print("API Request: "+r.url)
     #print(r.text)
-    file_list = pyjq.all('.files[] .url', json.loads(r.text))
+    data = json.loads(r.text)
+    file_list = [file['url'] for file in data.get('files', [])]
     #file_list.extend(pagination_file_list)
         #print(pagination_file_list)
     if verbose == True:
@@ -81,7 +107,7 @@ def print_file_list(api_key,search_terms,include_ext,exclude_ext,full_path,verbo
     if include_ext:
         url+="&extensions="+include_ext
     if exclude_ext:
-        url+="&stopextensions="+exclude_ext 
+        url+="&stopextensions="+exclude_ext
     if full_path:
         url+="&full-path="+full_path
     if api_key:
@@ -90,7 +116,9 @@ def print_file_list(api_key,search_terms,include_ext,exclude_ext,full_path,verbo
     if verbose == True:
         print("API Request: "+r.url)
     #print(r.text)
-    file_list = pyjq.all('.files[] .url', json.loads(r.text))
+    data = json.loads(r.text)
+    for file in data.get('files', []):
+        file_list.extend([file['id'], file['bucket'], file['url']])
     #file_list.extend(pagination_file_list)
         #print(pagination_file_list)
     if verbose == True:
@@ -155,7 +183,9 @@ def search_buckets(args):
         print(args)
 
 def main():
-    load_dotenv()
+    # Load environment variables from .env file if it exists
+    load_env_file()
+
     args = arguments()
 
     include_ext=""
@@ -222,7 +252,7 @@ The following are arguments passed in:
     
 
 if __name__ == "__main__":
-    print(f'''
+    print(r'''
 +-----------------------------------------------------------------------------+
 :    ______            _        _   _   _                     _               ;
 :    | ___ \          | |      | | | | | |                   | |              ;
