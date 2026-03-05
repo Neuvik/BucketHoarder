@@ -4,7 +4,7 @@ BucketHoarder was built to perform searches via the GrayHat Warfare APIs and the
 
 Things may break as the APIs are updated.
 
-Once intsall run BucketHoarder with the help command to understand how to format queries.
+Once installed run BucketHoarder with the help command to understand how to format queries.
 
 ```
 ./buckethoarder.py --help
@@ -14,7 +14,7 @@ Once intsall run BucketHoarder with the help command to understand how to format
 
 For most *nix machines.
 
-1. **Python 3.10** would be needed as some of the statement values are python 3.10 only
+1. **Python 3.13** would be needed
 2. Recommendation is to use `virtualenv`
 
 ```
